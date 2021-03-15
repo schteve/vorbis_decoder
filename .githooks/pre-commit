@@ -1,0 +1,7 @@
+#!C:/Program\ Files/Git/usr/bin/sh.exe
+if [ "$BRANCH_NAME" != '(no branch)' ]
+then
+    cargo fmt -- --check
+    cargo test
+    cargo clean -p vorbis_decoder; cargo clippy -- -Dwarnings
+fi

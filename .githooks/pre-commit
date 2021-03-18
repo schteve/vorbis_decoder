@@ -1,7 +1,22 @@
 #!C:/Program\ Files/Git/usr/bin/sh.exe
 if [ "$BRANCH_NAME" != '(no branch)' ]
 then
-    cargo fmt -- --check
-    cargo test
-    cargo clean -p vorbis_decoder; cargo clippy -- -Dwarnings
+    if ! cargo fmt -- --check
+    then
+        echo "ERROR: cargo fmt failed"
+        exit 1
+    fi
+
+    if ! cargo test
+    then
+        echo "ERROR: cargo test failed"
+        exit 1
+    fi
+
+    cargo clean -p vorbis_decoder
+    if ! cargo clippy -- -Dwarnings
+    then
+        echo "ERROR: cargo clippy failed"
+        exit 1
+    fi
 fi

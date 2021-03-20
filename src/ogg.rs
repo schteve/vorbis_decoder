@@ -36,7 +36,7 @@ pub struct OggPage {
     #[deku(count = "page_segments")]
     segment_table: Vec<u8>,
     #[deku(count = "segment_table.iter().map(|b| *b as usize).sum::<usize>()")]
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 impl OggPage {

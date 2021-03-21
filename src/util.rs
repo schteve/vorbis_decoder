@@ -75,7 +75,7 @@ pub fn float32_unpack(x: u32) -> f32 {
     todo!()
 }
 
-pub fn lookup1_values(x: u32) -> u32 {
+pub fn lookup1_values(entries: u32, dimensions: u32) -> u32 {
     todo!()
 }
 

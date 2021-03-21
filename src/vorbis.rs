@@ -1,4 +1,7 @@
+use bitstream_io::{BitRead, BitReader, LittleEndian};
 use deku::prelude::*;
+use std::cmp::Ordering;
+use std::io::Cursor;
 
 #[derive(Debug, DekuRead)]
 pub struct VorbisPacket {
@@ -19,7 +22,7 @@ pub enum VorbisPacketType {
     #[deku(id = "3")]
     Comment(CommentHeader),
     #[deku(id = "5")]
-    Setup(SetupHeader),
+    Setup(u8),
 }
 
 #[derive(Debug, DekuRead)]
@@ -84,10 +87,81 @@ pub struct UserComment {
     comment: String,
 }
 
-#[derive(Debug, DekuRead)]
 pub struct SetupHeader {
-    tmp: u8,
+    // TODO: have a Raw struct with all the intermediate data from decoding, that can be moved into a non-raw struct with just the relevant stuff?
+    vorbis_codebook_count: u8, // TODO: should this be removed? Maybe codebooks.len() is sufficient.
+    codebooks: Vec<Codebook>,
 }
+
+impl SetupHeader {
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        let mut cursor = Cursor::new(&bytes);
+        let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+
+        // Codebook decode
+        let vorbis_codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
+        for _ in 0..vorbis_codebook_count {
+            let a: u8 = reader.read(8).unwrap();
+            let b: u8 = reader.read(8).unwrap();
+            let c: u8 = reader.read(8).unwrap();
+            let sync_pattern = [a, b, c];
+            assert_eq!(sync_pattern, [0x42, 0x43, 0x56]);
+
+            let codebook_dimensions: u16 = reader.read(16).unwrap();
+            let codebook_entries: u32 = reader.read(24).unwrap();
+
+            let ordered: bool = reader.read::<u8>(1).unwrap() == 1;
+
+            let mut codebook_codeword_lengths: Vec<Option<u8>> = Vec::new();
+            if ordered == false {
+                // The codeword list is not length ordered and we need to read each codeword length one-by-one
+                let sparse: bool = reader.read::<u8>(1).unwrap() == 1;
+                for _ in 0..codebook_entries {
+                    if sparse == true {
+                        let flag: bool = reader.read::<u8>(1).unwrap() == 1;
+                        if flag == true {
+                            let length = reader.read::<u8>(1).unwrap() + 1;
+                            codebook_codeword_lengths.push(Some(length));
+                        } else {
+                            // This entry is unused. Mark it as such.
+                            codebook_codeword_lengths.push(None);
+                        }
+                    } else {
+                        let length = reader.read::<u8>(1).unwrap() + 1;
+                        codebook_codeword_lengths.push(Some(length));
+                    }
+                }
+            } else {
+                // The codeword list is encoded in ascending length order. Rather than reading a length for every
+                // codeword, we read the number of codewords per length.
+                let mut current_entry = 0;
+                let current_length = reader.read::<u8>(1).unwrap() + 1;
+                loop {
+                    let bits_to_read = ilog(codebook_entries - current_entry);
+                    let number = reader.read::<u32>(bits_to_read).unwrap();
+                    for _ in 0..number {
+                        codebook_codeword_lengths.push(Some(current_length));
+                    }
+                    current_entry += number;
+                    current_length += 1;
+
+                    match current_entry.cmp(&codebook_entries) {
+                        Ordering::Less => (),
+                        Ordering::Equal => break,
+                        Ordering::Greater => panic!("Error: too many codebook entries!"),
+                    }
+                }
+                // TODO: or make this a while current_entry < codebook_entries {} loop with a post-assertion
+            }
+
+            // Read vector lookup table
+        }
+
+        todo!()
+    }
+}
+
+pub struct Codebook {}
 
 #[derive(Debug, DekuRead)]
 pub struct Audio {

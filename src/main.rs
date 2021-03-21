@@ -42,7 +42,7 @@ fn main() {
     }
 
     // Comment header
-    let (_input, ogg_page) = OggPage::from_bytes(input).unwrap();
+    let (input, ogg_page) = OggPage::from_bytes(input).unwrap();
     let comment_header = VorbisPacket::from_bytes((&ogg_page.data, 0)).unwrap().1;
     //dbg!(&comment_header);
     match comment_header.packet {
@@ -55,4 +55,8 @@ fn main() {
             comment_header.packet
         ),
     }
+
+    // Setup header
+    let (_input, ogg_page) = OggPage::from_bytes(input).unwrap();
+    let setup_header = SetupHeader::from_bytes(&ogg_page.data);
 }

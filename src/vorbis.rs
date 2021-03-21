@@ -1,3 +1,4 @@
+use crate::util;
 use bitstream_io::{BitRead, BitReader, LittleEndian};
 use deku::prelude::*;
 use std::cmp::Ordering;
@@ -135,9 +136,9 @@ impl SetupHeader {
                 // The codeword list is encoded in ascending length order. Rather than reading a length for every
                 // codeword, we read the number of codewords per length.
                 let mut current_entry = 0;
-                let current_length = reader.read::<u8>(1).unwrap() + 1;
+                let mut current_length = reader.read::<u8>(1).unwrap() + 1;
                 loop {
-                    let bits_to_read = ilog(codebook_entries - current_entry);
+                    let bits_to_read = util::ilog(codebook_entries - current_entry);
                     let number = reader.read::<u32>(bits_to_read).unwrap();
                     for _ in 0..number {
                         codebook_codeword_lengths.push(Some(current_length));

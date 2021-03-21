@@ -4,13 +4,14 @@
 #![forbid(unsafe_code)]
 
 mod ogg;
+mod util;
 mod vorbis;
 
 //use bitstream_io::{BitRead, BitReader, LittleEndian};
+use crate::ogg::OggPage;
+use crate::vorbis::*;
 use deku::prelude::*;
-use ogg::OggPage;
 //use std::io::{Cursor, Read};
-use vorbis::*;
 
 fn main() {
     let bytes = include_bytes!("../bin/frampton.ogg");

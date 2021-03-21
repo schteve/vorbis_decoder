@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 #![forbid(unsafe_code)]
 
+mod huffman;
 mod ogg;
 mod util;
 mod vorbis;

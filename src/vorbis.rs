@@ -1,4 +1,4 @@
-use crate::util;
+use crate::{huffman::HuffmanTree, util};
 use bitstream_io::{BitRead, BitReader, LittleEndian};
 use deku::prelude::*;
 use std::cmp::Ordering;
@@ -103,12 +103,6 @@ impl SetupHeader {
         let vorbis_codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
         let mut codebooks: Vec<Codebook> = Vec::new();
         for _ in 0..vorbis_codebook_count {
-            let a: u8 = reader.read(8).unwrap();
-            let b: u8 = reader.read(8).unwrap();
-            let c: u8 = reader.read(8).unwrap();
-            let sync_pattern = [a, b, c];
-            assert_eq!(sync_pattern, [0x42, 0x43, 0x56]);
-
             let codebook = Codebook::decode(&mut reader);
             codebooks.push(codebook);
         }
@@ -126,6 +120,7 @@ pub struct Codebook {
     codeword_lengths: Vec<Option<u8>>,
     lookup_type: u8,
     vector_lookup_table: Option<VectorLookupTable>,
+    huffman_tree: HuffmanTree,
 }
 
 impl Codebook {
@@ -134,6 +129,12 @@ impl Codebook {
         R: std::io::Read,
         E: bitstream_io::Endianness,
     {
+        let a: u8 = reader.read(8).unwrap();
+        let b: u8 = reader.read(8).unwrap();
+        let c: u8 = reader.read(8).unwrap();
+        let sync_pattern = [a, b, c];
+        assert_eq!(sync_pattern, [0x42, 0x43, 0x56]);
+
         let mut codebook: Self = Default::default();
 
         codebook.dimensions = reader.read(16).unwrap();
@@ -211,6 +212,13 @@ impl Codebook {
             }
             _ => panic!("Reserved codebook lookup type: {}", lookup_type),
         };
+
+        // Set up Huffman tree
+        for (value, length) in codebook.codeword_lengths.iter().enumerate() {
+            if let Some(len) = length {
+                codebook.huffman_tree.add_node(*len, value as u32);
+            }
+        }
 
         codebook
     }

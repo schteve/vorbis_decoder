@@ -3,8 +3,10 @@
 #![allow(dead_code)]
 #![forbid(unsafe_code)]
 
+mod codebook;
 mod huffman;
 mod ogg;
+mod time_domain;
 mod util;
 mod vorbis;
 
@@ -52,10 +54,7 @@ fn main() {
             dbg!(&comment);
             dbg!(comment.is_valid());
         }
-        _ => panic!(
-            "Expected comment header type, got {:?}",
-            comment_header.packet
-        ),
+        x => panic!("Expected comment header type, got {:?}", x),
     }
 
     // Setup header

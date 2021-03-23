@@ -4,6 +4,8 @@
 #![forbid(unsafe_code)]
 
 mod codebook;
+mod floor0;
+mod floor1;
 mod huffman;
 mod ogg;
 mod time_domain;

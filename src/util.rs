@@ -1,5 +1,5 @@
 #[rustfmt::skip]
-const FLOOR1_INVERSE_DB_TABLE: [f32; 256] = [
+const FLOOR1_INVERSE_DB_TABLE: [f64; 256] = [
     1.0649863e-07, 1.1341951e-07, 1.2079015e-07, 1.2863978e-07,
     1.3699951e-07, 1.4590251e-07, 1.5538408e-07, 1.6548181e-07,
     1.7623575e-07, 1.8768855e-07, 1.9988561e-07, 2.1287530e-07,
@@ -71,27 +71,27 @@ pub fn ilog(x: u32) -> u32 {
     BITS as u32 - x.leading_zeros()
 }
 
-pub fn float32_unpack(x: u32) -> f32 {
+pub fn float32_unpack(_x: u32) -> f32 {
     todo!()
 }
 
-pub fn lookup1_values(entries: u32, dimensions: u32) -> u32 {
+pub fn lookup1_values(_entries: u32, _dimensions: u32) -> u32 {
     todo!()
 }
 
-pub fn low_neighbor(v: &[u32], x: u32) -> usize {
+pub fn low_neighbor(_v: &[u32], _x: u32) -> usize {
     todo!()
 }
 
-pub fn high_neighbor(v: &[u32], x: u32) -> usize {
+pub fn high_neighbor(_v: &[u32], _x: u32) -> usize {
     todo!()
 }
 
-pub fn render_point(x0: u32, y0: u32, x1: u32, y1: u32, x: u32) {
+pub fn render_point(_x0: u32, _y0: u32, _x1: u32, _y1: u32, _x: u32) {
     todo!()
 }
 
-pub fn render_line(x0: u32, y0: u32, x1: u32, y1: u32) {
+pub fn render_line(_x0: u32, _y0: u32, _x1: u32, _y1: u32) {
     todo!()
 }
 

@@ -102,19 +102,19 @@ impl SetupHeader {
 
         // Codebook decode
         let vorbis_codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
-        let codebooks: Vec<Codebook> = (0..vorbis_codebook_count)
+        let _codebooks: Vec<Codebook> = (0..vorbis_codebook_count)
             .map(|_| Codebook::decode(&mut reader))
             .collect();
 
         // Time domain transforms
         let vorbis_time_count = reader.read::<u8>(6).unwrap() + 1;
-        let time_domain_transforms: Vec<TimeDomainTransform> = (0..vorbis_time_count)
+        let _time_domain_transforms: Vec<TimeDomainTransform> = (0..vorbis_time_count)
             .map(|_| TimeDomainTransform::decode(&mut reader))
             .collect();
 
         // Floors
         let vorbis_floor_count = reader.read::<u8>(6).unwrap() + 1;
-        let vorbis_floor_configurations: Vec<Floor> = (0..vorbis_floor_count)
+        let _vorbis_floor_configurations: Vec<Floor> = (0..vorbis_floor_count)
             .map(|_| Floor::decode(&mut reader))
             .collect();
 

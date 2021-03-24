@@ -4,6 +4,10 @@ pub struct HuffmanTree {
 }
 
 impl HuffmanTree {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn add_node(&mut self, length: u8, value: u32) {
         let done = self.root.add_node(length, value);
         assert_eq!(done, true);
@@ -35,59 +39,61 @@ impl HuffmanNode {
 
     fn add_node(&mut self, length: u8, value: u32) -> bool {
         // TODO: make this a stack-based traversal (instead of recursive) operation on HuffmanTree? Depends on performance benefits.
-        if length == 1 {
-            // We are at the correct depth
+        match length {
+            0 => panic!("Invalid Huffman node depth == 0"),
+            1 => {
+                // We are at the correct depth
 
-            // Add the new node on the left, if there's room
-            if self.left.is_none() == true {
-                self.left = Some(Box::new(Self::with_value(value)));
-                return true;
+                // Add the new node on the left, if there's room
+                if self.left.is_none() == true {
+                    self.left = Some(Box::new(Self::with_value(value)));
+                    return true;
+                }
+
+                // Add the new node on the right, if there's room
+                if self.right.is_none() == true {
+                    self.right = Some(Box::new(Self::with_value(value)));
+                    return true;
+                }
             }
+            _ => {
+                // Look deeper
 
-            // Add the new node on the right, if there's room
-            if self.right.is_none() == true {
-                self.right = Some(Box::new(Self::with_value(value)));
-                return true;
-            }
-        } else if length > 1 {
-            // Look deeper
+                // Try going left first. If needed, create a new node there first.
+                if self.left.is_none() == true {
+                    self.left = Some(Box::new(Self::new()));
+                }
 
-            // Try going left first. If needed, create a new node there first.
-            if self.left.is_none() == true {
-                self.left = Some(Box::new(Self::new()));
-            }
+                // Go left if the left node exists and is not a leaf
+                if let Some(ref mut node) = &mut self.left {
+                    if node.is_leaf() == false {
+                        let done = node.add_node(length - 1, value);
+                        if done == true {
+                            return true;
+                        }
+                    }
+                }
 
-            // Go left if the left node exists and is not a leaf
-            if let Some(ref mut node) = &mut self.left {
-                if node.is_leaf() == false {
-                    let done = node.add_node(length - 1, value);
-                    if done == true {
-                        return true;
+                // Try going right. If needed, create a new node there first.
+                if self.right.is_none() == true {
+                    self.right = Some(Box::new(Self::default()));
+                }
+
+                // Go right if the right node exists and is not a leaf
+                if let Some(ref mut node) = &mut self.right {
+                    if node.is_leaf() == false {
+                        let done = node.add_node(length - 1, value);
+                        if done == true {
+                            return true;
+                        }
                     }
                 }
             }
-
-            // Try going right. If needed, create a new node there first.
-            if self.right.is_none() == true {
-                self.right = Some(Box::new(Self::default()));
-            }
-
-            // Go right if the right node exists and is not a leaf
-            if let Some(ref mut node) = &mut self.right {
-                if node.is_leaf() == false {
-                    let done = node.add_node(length - 1, value);
-                    if done == true {
-                        return true;
-                    }
-                }
-            }
-        } else {
-            panic!("Invalid Huffman node depth == 0");
         }
 
         // There wasn't room here or at any node lower in the tree. Go back up
         // the tree and look for another node at this depth on another branch.
-        return false;
+        false
     }
 }
 

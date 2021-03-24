@@ -60,5 +60,5 @@ fn main() {
 
     // Setup header
     let (_input, ogg_page) = OggPage::from_bytes(input).unwrap();
-    let setup_header = SetupHeader::from_bytes(&ogg_page.data);
+    let _setup_header = SetupHeader::from_bytes(&ogg_page.data);
 }

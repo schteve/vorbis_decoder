@@ -119,9 +119,8 @@ impl Floor1 {
         x_list[0] = 0;
         x_list[1] = u32::pow(2, rangebits as u32);
         assert_ne!(partitions, 0);
-        for i in 0..=partitions as usize {
-            let current_class_number = partition_class_list[i] as usize;
-            let max = classes[current_class_number].dimensions;
+        for &current_class_number in &partition_class_list {
+            let max = classes[current_class_number as usize].dimensions;
             assert_ne!(max, 0);
             x_list.extend((0..=max).map(|_| reader.read::<u32>(rangebits as u32).unwrap()));
         }

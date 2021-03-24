@@ -1,4 +1,4 @@
-use crate::{codebook::Codebook, floor0::Floor0, time_domain::TimeDomainTransform};
+use crate::{codebook::Codebook, floor::Floor, time_domain::TimeDomainTransform};
 use bitstream_io::{BitRead, BitReader, LittleEndian};
 use deku::prelude::*;
 use std::io::Cursor;
@@ -114,16 +114,9 @@ impl SetupHeader {
 
         // Floors
         let vorbis_floor_count = reader.read::<u8>(6).unwrap() + 1;
-        let mut vorbis_floor_configurations: Vec<Floor0> = Vec::new();
-        for _ in 0..vorbis_floor_count {
-            let vorbis_floor_type = reader.read::<u16>(16).unwrap();
-            match vorbis_floor_type {
-                0 => {
-                    vorbis_floor_configurations.push(Floor0::decode(&mut reader));
-                }
-                x => panic!("Invalid floor type {}", x),
-            }
-        }
+        let vorbis_floor_configurations: Vec<Floor> = (0..vorbis_floor_count)
+            .map(|_| Floor::decode(&mut reader))
+            .collect();
 
         todo!()
     }

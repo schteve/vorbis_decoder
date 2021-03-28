@@ -92,10 +92,19 @@ pub struct UserComment {
 
 pub struct SetupHeader {
     // TODO: have a Raw struct with all the intermediate data from decoding, that can be moved into a non-raw struct with just the relevant stuff?
-    vorbis_codebook_count: u8, // TODO: should this be removed? Maybe codebooks.len() is sufficient.
+    codebook_count: u8, // TODO: should this be removed? Maybe codebooks.len() is sufficient.
     codebooks: Vec<Codebook>,
-    vorbis_time_count: u8,
-    time_domain_transforms: Vec<u16>,
+    time_count: u8,
+    time_domain_transforms: Vec<TimeDomainTransform>,
+    floor_count: u8,
+    floor_configurations: Vec<Floor>,
+    residue_count: u8,
+    residue_configurations: Vec<Residue>,
+    mapping_count: u8,
+    mapping_configurations: Vec<Mapping>,
+    mode_count: u8,
+    mode_configurations: Vec<Mode>,
+    framing_flag: bool,
 }
 
 impl SetupHeader {
@@ -103,45 +112,57 @@ impl SetupHeader {
         let mut cursor = Cursor::new(bytes);
         let mut reader = BitReader::endian(&mut cursor, LittleEndian);
 
-        // Codebook decode
-        let vorbis_codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
-        let _codebooks: Vec<Codebook> = (0..vorbis_codebook_count)
+        // Codebooks
+        let codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
+        let codebooks = (0..codebook_count)
             .map(|_| Codebook::decode(&mut reader))
             .collect();
 
         // Time domain transforms
-        let vorbis_time_count = reader.read::<u8>(6).unwrap() + 1;
-        let _time_domain_transforms: Vec<TimeDomainTransform> = (0..vorbis_time_count)
+        let time_count = reader.read::<u8>(6).unwrap() + 1;
+        let time_domain_transforms = (0..time_count)
             .map(|_| TimeDomainTransform::decode(&mut reader))
             .collect();
 
         // Floors
-        let vorbis_floor_count = reader.read::<u8>(6).unwrap() + 1;
-        let _vorbis_floor_configurations: Vec<Floor> = (0..vorbis_floor_count)
+        let floor_count = reader.read::<u8>(6).unwrap() + 1;
+        let floor_configurations = (0..floor_count)
             .map(|_| Floor::decode(&mut reader))
             .collect();
 
         // Residues
-        let vorbis_residue_count = reader.read::<u8>(6).unwrap() + 1;
-        let _vorbis_residue_configurations: Vec<Residue> = (0..vorbis_residue_count)
+        let residue_count = reader.read::<u8>(6).unwrap() + 1;
+        let residue_configurations = (0..residue_count)
             .map(|_| Residue::decode(&mut reader))
             .collect();
 
         // Mappings
-        let vorbis_mapping_count = reader.read::<u8>(6).unwrap() + 1;
-        let _vorbis_mappings: Vec<Mapping> = (0..vorbis_mapping_count)
+        let mapping_count = reader.read::<u8>(6).unwrap() + 1;
+        let mapping_configurations = (0..mapping_count)
             .map(|_| Mapping::decode(&mut reader))
             .collect();
 
         // Modes
-        let vorbis_mode_count = reader.read::<u8>(6).unwrap() + 1;
-        let _vorbis_modes: Vec<Mode> = (0..vorbis_mode_count)
-            .map(|_| Mode::decode(&mut reader))
-            .collect();
+        let mode_count = reader.read::<u8>(6).unwrap() + 1;
+        let mode_configurations = (0..mode_count).map(|_| Mode::decode(&mut reader)).collect();
         let framing_flag: bool = reader.read::<u8>(1).unwrap() == 1;
         assert_eq!(framing_flag, true);
 
-        todo!()
+        Self {
+            codebook_count,
+            codebooks,
+            time_count,
+            time_domain_transforms,
+            floor_count,
+            floor_configurations,
+            residue_count,
+            residue_configurations,
+            mapping_count,
+            mapping_configurations,
+            mode_count,
+            mode_configurations,
+            framing_flag,
+        }
     }
 }
 

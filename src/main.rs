@@ -7,6 +7,7 @@ mod codebook;
 mod floor;
 mod huffman;
 mod mapping;
+mod mode;
 mod ogg;
 mod residue;
 mod time_domain;

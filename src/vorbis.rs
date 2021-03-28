@@ -1,5 +1,5 @@
 use crate::{
-    codebook::Codebook, floor::Floor, mapping::Mapping, residue::Residue,
+    codebook::Codebook, floor::Floor, mapping::Mapping, mode::Mode, residue::Residue,
     time_domain::TimeDomainTransform,
 };
 use bitstream_io::{BitRead, BitReader, LittleEndian};
@@ -132,6 +132,14 @@ impl SetupHeader {
         let _vorbis_mappings: Vec<Mapping> = (0..vorbis_mapping_count)
             .map(|_| Mapping::decode(&mut reader))
             .collect();
+
+        // Modes
+        let vorbis_mode_count = reader.read::<u8>(6).unwrap() + 1;
+        let _vorbis_modes: Vec<Mode> = (0..vorbis_mode_count)
+            .map(|_| Mode::decode(&mut reader))
+            .collect();
+        let framing_flag: bool = reader.read::<u8>(1).unwrap() == 1;
+        assert_eq!(framing_flag, true);
 
         todo!()
     }

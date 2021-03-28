@@ -1,4 +1,4 @@
-use crate::{codebook::Codebook, floor::Floor, time_domain::TimeDomainTransform};
+use crate::{codebook::Codebook, floor::Floor, residue::Residue, time_domain::TimeDomainTransform};
 use bitstream_io::{BitRead, BitReader, LittleEndian};
 use deku::prelude::*;
 use std::io::Cursor;
@@ -116,6 +116,12 @@ impl SetupHeader {
         let vorbis_floor_count = reader.read::<u8>(6).unwrap() + 1;
         let _vorbis_floor_configurations: Vec<Floor> = (0..vorbis_floor_count)
             .map(|_| Floor::decode(&mut reader))
+            .collect();
+
+        // Residues
+        let vorbis_residue_count = reader.read::<u8>(6).unwrap() + 1;
+        let _vorbis_residue_configurations: Vec<Residue> = (0..vorbis_residue_count)
+            .map(|_| Residue::decode(&mut reader))
             .collect();
 
         todo!()

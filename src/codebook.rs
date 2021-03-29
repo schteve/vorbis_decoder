@@ -1,6 +1,5 @@
 use crate::{huffman::HuffmanTree, util};
 use bitstream_io::{BitRead, BitReader};
-use std::cmp::Ordering;
 
 #[derive(Debug, Default)]
 pub struct Codebook {
@@ -64,12 +63,6 @@ impl Codebook {
                 }
                 current_entry += number;
                 current_length += 1;
-
-                match current_entry.cmp(&entries) {
-                    Ordering::Less => (),
-                    Ordering::Equal => break,
-                    Ordering::Greater => panic!("Error: too many codebook entries!"),
-                }
             }
             assert_eq!(current_entry, entries);
         }

@@ -108,9 +108,23 @@ pub struct SetupHeader {
 }
 
 impl SetupHeader {
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        let mut cursor = Cursor::new(bytes);
+    pub fn from_bytes(input: (&[u8], usize)) -> Self {
+        assert_eq!(input.1, 0); // Assume packet starts at bit 0
+        let mut cursor = Cursor::new(input.0);
         let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+
+        // This is a hack since currently the vorbis packet's header is not decoded before calling this function
+        let packet_type = reader.read::<u8>(8).unwrap();
+        assert_eq!(packet_type, 5);
+        let magic = [
+            reader.read::<u8>(8).unwrap(),
+            reader.read::<u8>(8).unwrap(),
+            reader.read::<u8>(8).unwrap(),
+            reader.read::<u8>(8).unwrap(),
+            reader.read::<u8>(8).unwrap(),
+            reader.read::<u8>(8).unwrap(),
+        ];
+        assert_eq!(&magic, b"vorbis");
 
         // Codebooks
         let codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
@@ -147,6 +161,11 @@ impl SetupHeader {
         let mode_configurations = (0..mode_count).map(|_| Mode::decode(&mut reader)).collect();
         let framing_flag: bool = reader.read::<u8>(1).unwrap() == 1;
         assert_eq!(framing_flag, true);
+
+        // Check post-conditions since we're not properly handling packet continuation
+        let _ = reader.into_reader(); // Discard the reader
+        let pos = cursor.position();
+        assert_eq!(cursor.into_inner().len(), pos as usize); // Check that cursor made it through the entire underlying buffer - no data left
 
         Self {
             codebook_count,

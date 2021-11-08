@@ -19,10 +19,11 @@ impl Codebook {
         R: std::io::Read,
         E: bitstream_io::Endianness,
     {
-        let a: u8 = reader.read(8).unwrap();
-        let b: u8 = reader.read(8).unwrap();
-        let c: u8 = reader.read(8).unwrap();
-        let sync_pattern = [a, b, c];
+        let sync_pattern: [u8; 3] = [
+            reader.read(8).unwrap(),
+            reader.read(8).unwrap(),
+            reader.read(8).unwrap(),
+        ];
         assert_eq!(sync_pattern, [0x42, 0x43, 0x56]);
 
         let dimensions = reader.read(16).unwrap();
@@ -39,14 +40,14 @@ impl Codebook {
                 if sparse == Some(true) {
                     let flag: bool = reader.read::<u8>(1).unwrap() == 1;
                     if flag == true {
-                        let length = reader.read::<u8>(1).unwrap() + 1;
+                        let length = reader.read::<u8>(5).unwrap() + 1;
                         codeword_lengths.push(Some(length));
                     } else {
                         // This entry is unused. Mark it as such.
                         codeword_lengths.push(None);
                     }
                 } else {
-                    let length = reader.read::<u8>(1).unwrap() + 1;
+                    let length = reader.read::<u8>(5).unwrap() + 1;
                     codeword_lengths.push(Some(length));
                 }
             }

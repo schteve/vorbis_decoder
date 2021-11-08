@@ -39,7 +39,10 @@ fn main() {
 
     // Identification header
     let (input, ogg_page) = OggPage::from_bytes((bytes, 0)).unwrap();
-    let id_header = VorbisPacket::from_bytes((&ogg_page.data, 0)).unwrap().1;
+    dbg!(&ogg_page);
+    let (ogg_data_remaining, id_header) = VorbisPacket::from_bytes((&ogg_page.data, 0)).unwrap();
+    assert!(ogg_data_remaining.0.is_empty()); // Unclear if this is a spec requirement
+    assert_eq!(ogg_data_remaining.1, 0);
     //dbg!(&id_header);
     match id_header.packet {
         VorbisPacketType::Identification(id) => {
@@ -51,7 +54,9 @@ fn main() {
 
     // Comment header
     let (input, ogg_page) = OggPage::from_bytes(input).unwrap();
-    let comment_header = VorbisPacket::from_bytes((&ogg_page.data, 0)).unwrap().1;
+    dbg!(&ogg_page);
+    let (ogg_data_remaining, comment_header) =
+        VorbisPacket::from_bytes((&ogg_page.data, 0)).unwrap();
     //dbg!(&comment_header);
     match comment_header.packet {
         VorbisPacketType::Comment(comment) => {
@@ -62,6 +67,6 @@ fn main() {
     }
 
     // Setup header
-    let (_input, ogg_page) = OggPage::from_bytes(input).unwrap();
-    let _setup_header = SetupHeader::from_bytes(&ogg_page.data);
+    dbg!(&ogg_data_remaining); // Dev hack. Second Ogg page has both comment and setup headers
+    let _setup_header = SetupHeader::from_bytes(ogg_data_remaining);
 }

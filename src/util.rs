@@ -84,8 +84,12 @@ pub fn float32_unpack(x: u32) -> f32 {
     f
 }
 
-pub fn lookup1_values(_entries: u32, _dimensions: u32) -> u32 {
-    todo!()
+pub fn lookup1_values(entries: u32, dimensions: u32) -> u32 {
+    let mut retval: u32 = 0;
+    while (retval + 1).pow(dimensions) <= entries {
+        retval += 1;
+    }
+    retval
 }
 
 pub fn low_neighbor(_v: &[u32], _x: u32) -> usize {
@@ -158,5 +162,23 @@ mod test {
         assert_eq!(float32_unpack(0xE2600001), -0.5);
         assert_eq!(float32_unpack(0x61800001), 0.00390625);
         assert_eq!(float32_unpack(0xE1800001), -0.00390625);
+    }
+
+    #[test]
+    fn test_lookup1_values() {
+        assert_eq!(lookup1_values(0, 0), 0); // 0 to the 0th power is undefined
+        assert_eq!(lookup1_values(0, 1), 0);
+        assert_eq!(lookup1_values(0, 2), 0);
+        assert_eq!(lookup1_values(0, 10), 0);
+        assert_eq!(lookup1_values(81, 4), 3);
+        assert_eq!(lookup1_values(271, 4), 4);
+        assert_eq!(lookup1_values(625, 4), 5);
+        assert_eq!(lookup1_values(81, 2), 9);
+        assert_eq!(lookup1_values(168, 2), 12);
+        assert_eq!(lookup1_values(169, 2), 13);
+        assert_eq!(lookup1_values(224, 2), 14);
+        assert_eq!(lookup1_values(225, 2), 15);
+        assert_eq!(lookup1_values(288, 2), 16);
+        assert_eq!(lookup1_values(289, 2), 17);
     }
 }

@@ -53,7 +53,7 @@ fn main() {
     }
 
     // Comment header
-    let (input, ogg_page) = OggPage::from_bytes(input).unwrap();
+    let (_input, ogg_page) = OggPage::from_bytes(input).unwrap();
     dbg!(&ogg_page);
     let (ogg_data_remaining, comment_header) =
         VorbisPacket::from_bytes((&ogg_page.data, 0)).unwrap();

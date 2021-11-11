@@ -10,7 +10,7 @@ impl HuffmanTree {
 
     pub fn add_node(&mut self, length: u8, value: u32) {
         let done = self.root.add_node(length, value);
-        assert_eq!(done, true);
+        assert!(done);
     }
 }
 

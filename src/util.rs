@@ -71,8 +71,17 @@ pub fn ilog(x: u32) -> u32 {
     BITS as u32 - x.leading_zeros()
 }
 
-pub fn float32_unpack(_x: u32) -> f32 {
-    todo!()
+pub fn float32_unpack(x: u32) -> f32 {
+    let mut mantissa: i32 = (x & 0x001FFFFF) as i32;
+    let sign: bool = (x & 0x80000000) != 0;
+    let exponent: i32 = ((x & 0x7FE00000) >> 21) as i32;
+    if sign == true {
+        mantissa *= -1;
+    }
+    let pow: f32 = 2.0_f32.powi(exponent - 788);
+    let f = mantissa as f32 * pow;
+    assert!(f.is_finite());
+    f
 }
 
 pub fn lookup1_values(_entries: u32, _dimensions: u32) -> u32 {
@@ -107,5 +116,47 @@ mod test {
         assert_eq!(ilog(3), 2);
         assert_eq!(ilog(4), 3);
         assert_eq!(ilog(7), 3);
+    }
+
+    #[test]
+    fn test_float32_unpack() {
+        // Zero
+        assert_eq!(float32_unpack(0x00000000), 0.0);
+        assert_eq!(float32_unpack(0x80000000), 0.0);
+        assert_eq!(float32_unpack(0x66600000), 0.0);
+
+        // 1 in different ways (mantissa and exponent cancel each other out)
+        assert_eq!(float32_unpack(0x62800001), 1.0);
+        assert_eq!(float32_unpack(0x62000010), 1.0);
+        assert_eq!(float32_unpack(0x61800100), 1.0);
+        assert_eq!(float32_unpack(0x61001000), 1.0);
+        assert_eq!(float32_unpack(0x60810000), 1.0);
+        assert_eq!(float32_unpack(0x60100000), 1.0);
+
+        // -1 in different ways (mantissa and exponent cancel each other out)
+        assert_eq!(float32_unpack(0xE2800001), -1.0);
+        assert_eq!(float32_unpack(0xE2000010), -1.0);
+        assert_eq!(float32_unpack(0xE1800100), -1.0);
+        assert_eq!(float32_unpack(0xE1001000), -1.0);
+        assert_eq!(float32_unpack(0xE0810000), -1.0);
+        assert_eq!(float32_unpack(0xE0100000), -1.0);
+
+        // A few other numbers
+        assert_eq!(float32_unpack(0x62800004), 4.0);
+        assert_eq!(float32_unpack(0x62800009), 9.0);
+        assert_eq!(float32_unpack(0x62800010), 16.0);
+        assert_eq!(float32_unpack(0x62800019), 25.0);
+        assert_eq!(float32_unpack(0x628F4240), 1_000_000.0);
+        assert_eq!(float32_unpack(0xE28F4240), -1_000_000.0);
+
+        // Fractions
+        assert_eq!(float32_unpack(0x62600001), 0.5);
+        assert_eq!(float32_unpack(0xE2600001), -0.5);
+        assert_eq!(float32_unpack(0x62400001), 0.25);
+        assert_eq!(float32_unpack(0xE2400001), -0.25);
+        assert_eq!(float32_unpack(0x62600001), 0.5);
+        assert_eq!(float32_unpack(0xE2600001), -0.5);
+        assert_eq!(float32_unpack(0x61800001), 0.00390625);
+        assert_eq!(float32_unpack(0xE1800001), -0.00390625);
     }
 }

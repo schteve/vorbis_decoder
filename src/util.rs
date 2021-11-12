@@ -116,8 +116,17 @@ pub fn high_neighbor(v: &[i32], x: usize) -> usize {
         .0
 }
 
-pub fn render_point(_x0: u32, _y0: u32, _x1: u32, _y1: u32, _x: u32) {
-    todo!()
+pub fn render_point(x0: i32, y0: i32, x1: i32, y1: i32, x: i32) -> i32 {
+    let dy = y1 - y0;
+    let adx = x1 - x0;
+    let ady = dy.abs();
+    let err = ady * (x - x0);
+    let off = err / adx;
+    if dy < 0 {
+        y0 - off
+    } else {
+        y0 + off
+    }
 }
 
 pub fn render_line(_x0: u32, _y0: u32, _x1: u32, _y1: u32) {
@@ -281,5 +290,12 @@ mod test {
     #[should_panic]
     fn test_high_neighbor_invalid4() {
         high_neighbor(&[0, 1, 2], 2);
+    }
+
+    #[test]
+    fn test_render_point() {
+        assert_eq!(render_point(0, 0, 1, 0, 0), 0);
+        assert_eq!(render_point(0, 83, 128, 72, 12), 82);
+        assert_eq!(render_point(12, 86, 128, 72, 46), 82);
     }
 }

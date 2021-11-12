@@ -104,8 +104,16 @@ pub fn low_neighbor(v: &[i32], x: usize) -> usize {
         .0
 }
 
-pub fn high_neighbor(_v: &[u32], _x: u32) -> usize {
-    todo!()
+pub fn high_neighbor(v: &[i32], x: usize) -> usize {
+    assert!(x < v.len());
+    let range = &v[..x];
+    range
+        .iter()
+        .enumerate()
+        .filter(|(_n, i)| **i > v[x])
+        .min_by_key(|(_n, i)| **i)
+        .unwrap_or_else(|| panic!("No values greater than v[{}]={}", x, v[x]))
+        .0
 }
 
 pub fn render_point(_x0: u32, _y0: u32, _x1: u32, _y1: u32, _x: u32) {
@@ -231,5 +239,47 @@ mod test {
     #[should_panic]
     fn test_low_neighbor_invalid4() {
         low_neighbor(&[2, 1, 0], 2);
+    }
+
+    fn test_high_neighbor() {
+        assert_eq!(high_neighbor(&[2, 1, 0], 2), 1);
+        assert_eq!(
+            high_neighbor(
+                &[0, 128, 12, 46, 4, 8, 16, 23, 33, 70, 2, 6, 10, 14, 19, 28, 39, 58, 90],
+                2
+            ),
+            1
+        );
+        assert_eq!(
+            high_neighbor(
+                &[0, 128, 12, 46, 4, 8, 16, 23, 33, 70, 2, 6, 10, 14, 19, 28, 39, 58, 90],
+                18
+            ),
+            1
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_high_neighbor_invalid1() {
+        high_neighbor(&[], 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_high_neighbor_invalid2() {
+        high_neighbor(&[0], 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_high_neighbor_invalid3() {
+        high_neighbor(&[0, 1, 2], 5);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_high_neighbor_invalid4() {
+        high_neighbor(&[0, 1, 2], 2);
     }
 }

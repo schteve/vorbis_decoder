@@ -92,8 +92,16 @@ pub fn lookup1_values(entries: u32, dimensions: u32) -> u32 {
     retval
 }
 
-pub fn low_neighbor(_v: &[u32], _x: u32) -> usize {
-    todo!()
+pub fn low_neighbor(v: &[i32], x: usize) -> usize {
+    assert!(x < v.len());
+    let range = &v[..x];
+    range
+        .iter()
+        .enumerate()
+        .filter(|(_n, i)| **i < v[x])
+        .max_by_key(|(_n, i)| **i)
+        .unwrap_or_else(|| panic!("No values less than v[{}]={}", x, v[x]))
+        .0
 }
 
 pub fn high_neighbor(_v: &[u32], _x: u32) -> usize {
@@ -180,5 +188,48 @@ mod test {
         assert_eq!(lookup1_values(225, 2), 15);
         assert_eq!(lookup1_values(288, 2), 16);
         assert_eq!(lookup1_values(289, 2), 17);
+    }
+
+    #[test]
+    fn test_low_neighbor() {
+        assert_eq!(low_neighbor(&[0, 1, 2], 2), 1);
+        assert_eq!(
+            low_neighbor(
+                &[0, 128, 12, 46, 4, 8, 16, 23, 33, 70, 2, 6, 10, 14, 19, 28, 39, 58, 90],
+                2
+            ),
+            0
+        );
+        assert_eq!(
+            low_neighbor(
+                &[0, 128, 12, 46, 4, 8, 16, 23, 33, 70, 2, 6, 10, 14, 19, 28, 39, 58, 90],
+                18
+            ),
+            9
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_low_neighbor_invalid1() {
+        low_neighbor(&[], 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_low_neighbor_invalid2() {
+        low_neighbor(&[0], 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_low_neighbor_invalid3() {
+        low_neighbor(&[0, 1, 2], 5);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_low_neighbor_invalid4() {
+        low_neighbor(&[2, 1, 0], 2);
     }
 }

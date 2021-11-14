@@ -129,8 +129,32 @@ pub fn render_point(x0: i32, y0: i32, x1: i32, y1: i32, x: i32) -> i32 {
     }
 }
 
-pub fn render_line(_x0: u32, _y0: u32, _x1: u32, _y1: u32) {
-    todo!()
+pub fn render_line(x0: i32, y0: i32, x1: i32, y1: i32, v: &mut Vec<i32>) {
+    assert!(x0 <= x1);
+    let range = 0..=v.len();
+    assert!(range.contains(&(x0 as usize)));
+    assert!(range.contains(&(x1 as usize)));
+
+    let dy = y1 - y0;
+    let adx = x1 - x0;
+    let base = dy / adx;
+
+    let mut y = y0;
+    let mut err = 0;
+    let sy = if dy < 0 { base - 1 } else { base + 1 };
+    let ady = dy.abs() - base.abs() * adx;
+    v[x0 as usize] = y;
+
+    for x in x0 + 1..x1 {
+        err += ady;
+        if err >= adx {
+            err -= adx;
+            y += sy;
+        } else {
+            y += base;
+        }
+        v[x as usize] = y;
+    }
 }
 
 #[cfg(test)]
@@ -297,5 +321,48 @@ mod test {
         assert_eq!(render_point(0, 0, 1, 0, 0), 0);
         assert_eq!(render_point(0, 83, 128, 72, 12), 82);
         assert_eq!(render_point(12, 86, 128, 72, 46), 82);
+    }
+
+    #[test]
+    fn test_render_line() {
+        // Flat line
+        let mut v = vec![0; 5];
+        render_line(0, 0, 5, 0, &mut v);
+        assert_eq!(v, vec![0, 0, 0, 0, 0]);
+
+        // Simple line
+        let mut v = vec![0; 5];
+        render_line(0, 0, 5, 5, &mut v);
+        assert_eq!(v, vec![0, 1, 2, 3, 4]);
+
+        // From an example
+        let mut v = vec![0; 12];
+        render_line(0, 166, 12, 172, &mut v);
+        assert_eq!(
+            v,
+            vec![166, 166, 167, 167, 168, 168, 169, 169, 170, 170, 171, 171]
+        );
+
+        // Another example
+        let mut v = vec![0; 16];
+        render_line(12, 172, 16, 162, &mut v);
+        assert_eq!(
+            v,
+            vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 172, 170, 167, 165]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_render_line_invalid1() {
+        let mut v = Vec::new();
+        render_line(0, 0, 100, 100, &mut v);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_render_line_invalid2() {
+        let mut v = vec![0; 12];
+        render_line(0, 0, -12, 0, &mut v);
     }
 }

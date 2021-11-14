@@ -27,7 +27,7 @@ impl Codebook {
         assert_eq!(sync_pattern, [0x42, 0x43, 0x56]);
 
         let dimensions = reader.read(16).unwrap();
-        let entries = reader.read(24).unwrap();
+        let entries: u32 = reader.read(24).unwrap();
 
         let ordered = reader.read::<u8>(1).unwrap() == 1;
 
@@ -54,10 +54,10 @@ impl Codebook {
         } else {
             // The codeword list is encoded in ascending length order. Rather than reading a length for every
             // codeword, we read the number of codewords per length.
-            let mut current_entry = 0;
+            let mut current_entry: u32 = 0;
             let mut current_length = reader.read::<u8>(1).unwrap() + 1;
             while current_entry < entries {
-                let bits_to_read = util::ilog(entries - current_entry);
+                let bits_to_read = util::ilog((entries - current_entry) as i32);
                 let number = reader.read::<u32>(bits_to_read).unwrap();
                 for _ in 0..number {
                     codeword_lengths.push(Some(current_length));

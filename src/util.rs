@@ -66,9 +66,16 @@ const FLOOR1_INVERSE_DB_TABLE: [f64; 256] = [
     0.82788260,    0.88168307,    0.9389798,     1.
 ];
 
-pub fn ilog(x: u32) -> u32 {
-    const BITS: usize = std::mem::size_of::<u32>() * 8;
-    BITS as u32 - x.leading_zeros()
+/// Returns the position number (1 through n) of the highest set bit in the
+/// two’s complement integer value [x]. Values of [x] less than zero are defined
+/// to return zero.
+pub fn ilog(x: i32) -> u32 {
+    if x < 0 {
+        0
+    } else {
+        const BITS: usize = std::mem::size_of::<i32>() * 8;
+        BITS as u32 - x.leading_zeros()
+    }
 }
 
 pub fn float32_unpack(x: u32) -> f32 {
@@ -163,6 +170,8 @@ mod test {
 
     #[test]
     fn test_ilog() {
+        assert_eq!(ilog(-100), 0);
+        assert_eq!(ilog(-1), 0);
         assert_eq!(ilog(0), 0);
         assert_eq!(ilog(1), 1);
         assert_eq!(ilog(2), 2);

@@ -78,6 +78,8 @@ pub fn ilog(x: i32) -> u32 {
     }
 }
 
+/// Translate the packed binary representation of a Vorbis codebook float value
+/// into the representation used by the decoder for floating point numbers.
 pub fn float32_unpack(x: u32) -> f32 {
     let mut mantissa: i32 = (x & 0x001FFFFF) as i32;
     let sign: bool = (x & 0x80000000) != 0;
@@ -91,6 +93,8 @@ pub fn float32_unpack(x: u32) -> f32 {
     f
 }
 
+/// Find the greatest integer value which to the power of `dimensions` is less
+/// than or equal to `entries` i.e. return_value ** dimensions <= entries.
 pub fn lookup1_values(entries: u32, dimensions: u32) -> u32 {
     let mut retval: u32 = 0;
     while (retval + 1).pow(dimensions) <= entries {
@@ -99,6 +103,10 @@ pub fn lookup1_values(entries: u32, dimensions: u32) -> u32 {
     retval
 }
 
+/// Find the position `n` in vector `v` of the greatest value scalar element for
+/// which `n` is less than `x` and `v[n]` is less than `v[x]`. In other words,
+/// find the vector element whose value is closest to the given value without
+/// going over.
 pub fn low_neighbor(v: &[i32], x: usize) -> usize {
     assert!(x < v.len());
     let range = &v[..x];
@@ -111,6 +119,10 @@ pub fn low_neighbor(v: &[i32], x: usize) -> usize {
         .0
 }
 
+/// Find the position `n` in vector `v` of the lowest value scalar element for
+/// which `n` is less than `x` and `v[n]` is greater than `v[x]`. In other words,
+/// find the vector element whose value is closest to the given value without
+/// going under.
 pub fn high_neighbor(v: &[i32], x: usize) -> usize {
     assert!(x < v.len());
     let range = &v[..x];
@@ -123,6 +135,9 @@ pub fn high_neighbor(v: &[i32], x: usize) -> usize {
         .0
 }
 
+/// Find the Y value at point `x` along the line specified by `x0`, `x1`, `y0`
+/// and `y1`. This function uses an integer algorithm to solve for the point
+/// directly without calculating intervening values along the line.
 pub fn render_point(x0: i32, y0: i32, x1: i32, y1: i32, x: i32) -> i32 {
     let dy = y1 - y0;
     let adx = x1 - x0;
@@ -136,6 +151,10 @@ pub fn render_point(x0: i32, y0: i32, x1: i32, y1: i32, x: i32) -> i32 {
     }
 }
 
+/// Draw a line defined by the given coordinates into the given vector.
+/// Floor decode type one uses the integer line drawing algorithm of
+/// `render_line(x0, y0, x1, y1, v)` to construct an integer floor curve for
+/// contiguous piecewise line segments.
 pub fn render_line(x0: i32, y0: i32, x1: i32, y1: i32, v: &mut Vec<i32>) {
     assert!(x0 <= x1);
     let range = 0..=v.len();

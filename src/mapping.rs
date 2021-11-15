@@ -18,6 +18,9 @@ impl Mapping {
         R: std::io::Read,
         E: bitstream_io::Endianness,
     {
+        // TODO: use audio_channels from the ID header instead
+        let audio_channels: u8 = 1;
+
         let mapping_type = reader.read(16).unwrap();
         assert_eq!(mapping_type, 0);
 
@@ -35,9 +38,9 @@ impl Mapping {
             // Polar channel mapping is in use
             let coupling_steps = reader.read::<u8>(8).unwrap() + 1;
             for _ in 0..coupling_steps {
-                let m_bits = util::ilog(2 - 1); // TODO: use audio_channels from the ID header instead of 2
+                let m_bits = util::ilog(audio_channels as i32 - 1);
                 let m = reader.read::<u8>(m_bits).unwrap();
-                let a_bits = util::ilog(2 - 1); // TODO: use audio_channels from the ID header instead of 2
+                let a_bits = util::ilog(audio_channels as i32 - 1);
                 let a = reader.read::<u8>(a_bits).unwrap();
 
                 // Validate:
@@ -45,8 +48,8 @@ impl Mapping {
                 // the magnitude channel number is greater than [audio_channels]-1,
                 // or the angle channel is greater than [audio_channels]-1, the stream is undecodable.
                 assert_ne!(m, a);
-                assert!(m >= 2); // TODO: use audio_channels from the ID header instead of 2
-                assert!(a >= 2); // TODO: use audio_channels from the ID header instead of 2
+                assert!(m >= audio_channels);
+                assert!(a >= audio_channels);
 
                 magnitude.push(m);
                 angle.push(a);
@@ -61,7 +64,7 @@ impl Mapping {
 
         let mux: Vec<u8> = if submaps > 1 {
             // Read channel multiplex settings
-            (0..2) // TODO: use audio_channels from the ID header instead of 2
+            (0..audio_channels)
                 .map(|_| {
                     let value = reader.read::<u8>(4).unwrap();
                     assert!(value < submaps);
@@ -71,7 +74,7 @@ impl Mapping {
         } else {
             // This isn't specified as far as I can tell, but since other parts of the spec
             // assume a mux value exists for each audio channel then the default must be 0
-            vec![0; 2] // TODO: use audio_channels from the ID header instead of 2
+            vec![0; audio_channels as usize]
         };
 
         // Read the floor and residue numbers for use in decoding each submap
@@ -101,7 +104,7 @@ impl Submap {
         R: std::io::Read,
         E: bitstream_io::Endianness,
     {
-        let _: u8 = reader.read(4).unwrap(); // Unused time configuration placeholder
+        let _: u8 = reader.read(8).unwrap(); // Unused time configuration placeholder
 
         let floor = reader.read(8).unwrap();
         // TODO: verify the floor number is not greater than the highest number floor configured for the bitstream

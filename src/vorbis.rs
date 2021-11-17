@@ -127,22 +127,25 @@ impl SetupHeader {
         assert_eq!(&magic, b"vorbis");
 
         // Codebooks
-        let codebook_count: u8 = reader.read::<u8>(8).unwrap() + 1;
+        let codebook_count = reader.read::<u8>(8).unwrap() + 1;
         let codebooks = (0..codebook_count)
             .map(|_| Codebook::decode(&mut reader))
-            .collect();
+            .collect::<Result<_, _>>()
+            .unwrap();
 
         // Time domain transforms
         let time_count = reader.read::<u8>(6).unwrap() + 1;
         let time_domain_transforms = (0..time_count)
             .map(|_| TimeDomainTransform::decode(&mut reader))
-            .collect();
+            .collect::<Result<_, _>>()
+            .unwrap();
 
         // Floors
         let floor_count = reader.read::<u8>(6).unwrap() + 1;
         let floor_configurations = (0..floor_count)
             .map(|_| Floor::decode(&mut reader))
-            .collect();
+            .collect::<Result<_, _>>()
+            .unwrap();
 
         // Residues
         let residue_count = reader.read::<u8>(6).unwrap() + 1;

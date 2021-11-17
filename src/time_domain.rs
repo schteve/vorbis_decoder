@@ -1,4 +1,5 @@
 use bitstream_io::{BitRead, BitReader};
+use thiserror::Error;
 
 #[derive(Debug, Default)]
 pub struct TimeDomainTransform {
@@ -6,15 +7,28 @@ pub struct TimeDomainTransform {
 }
 
 impl TimeDomainTransform {
-    pub fn decode<R, E>(reader: &mut BitReader<R, E>) -> Self
+    pub fn decode<R, E>(reader: &mut BitReader<R, E>) -> Result<Self, TimeDomainError>
     where
         R: std::io::Read,
         E: bitstream_io::Endianness,
     {
-        let reserved = reader.read(16).unwrap();
-        assert_eq!(reserved, 0);
-        Self { reserved }
+        let reserved = reader.read(16)?;
+        if reserved != 0 {
+            return Err(TimeDomainError::Reserved(reserved));
+        }
+
+        Ok(Self { reserved })
     }
+}
+
+#[derive(Debug, Error)]
+pub enum TimeDomainError {
+    #[error("Reserved value invalid: {0}")]
+    Reserved(u16),
+
+    // Represents all cases of `std::io::Error`.
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
 }
 
 #[cfg(test)]

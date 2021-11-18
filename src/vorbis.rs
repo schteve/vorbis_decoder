@@ -151,7 +151,8 @@ impl SetupHeader {
         let residue_count = reader.read::<u8>(6).unwrap() + 1;
         let residue_configurations = (0..residue_count)
             .map(|_| Residue::decode(&mut reader))
-            .collect();
+            .collect::<Result<_, _>>()
+            .unwrap();
 
         // Mappings
         let mapping_count = reader.read::<u8>(6).unwrap() + 1;

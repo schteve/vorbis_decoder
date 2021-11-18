@@ -158,7 +158,8 @@ impl SetupHeader {
         let mapping_count = reader.read::<u8>(6).unwrap() + 1;
         let mapping_configurations = (0..mapping_count)
             .map(|_| Mapping::decode(&mut reader))
-            .collect();
+            .collect::<Result<_, _>>()
+            .unwrap();
 
         // Modes
         let mode_count = reader.read::<u8>(6).unwrap() + 1;

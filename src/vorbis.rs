@@ -163,7 +163,10 @@ impl SetupHeader {
 
         // Modes
         let mode_count = reader.read::<u8>(6).unwrap() + 1;
-        let mode_configurations = (0..mode_count).map(|_| Mode::decode(&mut reader)).collect();
+        let mode_configurations = (0..mode_count)
+            .map(|_| Mode::decode(&mut reader))
+            .collect::<Result<_, _>>()
+            .unwrap();
         let framing_flag: bool = reader.read::<u8>(1).unwrap() == 1;
         assert!(framing_flag);
 

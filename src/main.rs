@@ -68,5 +68,5 @@ fn main() {
 
     // Setup header
     dbg!(&ogg_data_remaining); // Dev hack. Second Ogg page has both comment and setup headers
-    let _setup_header = SetupHeader::from_bytes(ogg_data_remaining);
+    let _setup_header = SetupHeader::from_bytes(ogg_data_remaining).unwrap();
 }

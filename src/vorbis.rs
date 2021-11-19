@@ -1,10 +1,15 @@
 use crate::{
-    codebook::Codebook, floor::Floor, mapping::Mapping, mode::Mode, residue::Residue,
-    time_domain::TimeDomainTransform,
+    codebook::{Codebook, CodebookError},
+    floor::{Floor, FloorError},
+    mapping::{Mapping, MappingError},
+    mode::{Mode, ModeError},
+    residue::{Residue, ResidueError},
+    time_domain::{TimeDomainError, TimeDomainTransform},
 };
 use bitstream_io::{BitRead, BitReader, LittleEndian};
 use deku::prelude::*;
 use std::io::Cursor;
+use thiserror::Error;
 
 #[derive(Debug, DekuRead)]
 pub struct VorbisPacket {
@@ -108,66 +113,60 @@ pub struct SetupHeader {
 }
 
 impl SetupHeader {
-    pub fn from_bytes(input: (&[u8], usize)) -> Self {
+    pub fn from_bytes(input: (&[u8], usize)) -> Result<Self, SetupError> {
         assert_eq!(input.1, 0); // Assume packet starts at bit 0
         let mut cursor = Cursor::new(input.0);
         let mut reader = BitReader::endian(&mut cursor, LittleEndian);
 
         // This is a hack since currently the vorbis packet's header is not decoded before calling this function
-        let packet_type = reader.read::<u8>(8).unwrap();
+        let packet_type = reader.read::<u8>(8)?;
         assert_eq!(packet_type, 5);
         let magic = [
-            reader.read::<u8>(8).unwrap(),
-            reader.read::<u8>(8).unwrap(),
-            reader.read::<u8>(8).unwrap(),
-            reader.read::<u8>(8).unwrap(),
-            reader.read::<u8>(8).unwrap(),
-            reader.read::<u8>(8).unwrap(),
+            reader.read::<u8>(8)?,
+            reader.read::<u8>(8)?,
+            reader.read::<u8>(8)?,
+            reader.read::<u8>(8)?,
+            reader.read::<u8>(8)?,
+            reader.read::<u8>(8)?,
         ];
         assert_eq!(&magic, b"vorbis");
 
         // Codebooks
-        let codebook_count = reader.read::<u8>(8).unwrap() + 1;
+        let codebook_count = reader.read::<u8>(8)? + 1;
         let codebooks = (0..codebook_count)
             .map(|_| Codebook::decode(&mut reader))
-            .collect::<Result<_, _>>()
-            .unwrap();
+            .collect::<Result<_, _>>()?;
 
         // Time domain transforms
-        let time_count = reader.read::<u8>(6).unwrap() + 1;
+        let time_count = reader.read::<u8>(6)? + 1;
         let time_domain_transforms = (0..time_count)
             .map(|_| TimeDomainTransform::decode(&mut reader))
-            .collect::<Result<_, _>>()
-            .unwrap();
+            .collect::<Result<_, _>>()?;
 
         // Floors
-        let floor_count = reader.read::<u8>(6).unwrap() + 1;
+        let floor_count = reader.read::<u8>(6)? + 1;
         let floor_configurations = (0..floor_count)
             .map(|_| Floor::decode(&mut reader))
-            .collect::<Result<_, _>>()
-            .unwrap();
+            .collect::<Result<_, _>>()?;
 
         // Residues
-        let residue_count = reader.read::<u8>(6).unwrap() + 1;
+        let residue_count = reader.read::<u8>(6)? + 1;
         let residue_configurations = (0..residue_count)
             .map(|_| Residue::decode(&mut reader))
-            .collect::<Result<_, _>>()
-            .unwrap();
+            .collect::<Result<_, _>>()?;
 
         // Mappings
-        let mapping_count = reader.read::<u8>(6).unwrap() + 1;
+        let mapping_count = reader.read::<u8>(6)? + 1;
         let mapping_configurations = (0..mapping_count)
             .map(|_| Mapping::decode(&mut reader))
-            .collect::<Result<_, _>>()
-            .unwrap();
+            .collect::<Result<_, _>>()?;
 
         // Modes
-        let mode_count = reader.read::<u8>(6).unwrap() + 1;
+        let mode_count = reader.read::<u8>(6)? + 1;
         let mode_configurations = (0..mode_count)
             .map(|_| Mode::decode(&mut reader))
-            .collect::<Result<_, _>>()
-            .unwrap();
-        let framing_flag: bool = reader.read::<u8>(1).unwrap() == 1;
+            .collect::<Result<_, _>>()?;
+        let framing_flag: bool = reader.read::<u8>(1)? == 1;
         assert!(framing_flag);
 
         // Check post-conditions since we're not properly handling packet continuation
@@ -175,7 +174,7 @@ impl SetupHeader {
         let pos = cursor.position();
         assert_eq!(cursor.into_inner().len(), pos as usize); // Check that cursor made it through the entire underlying buffer - no data left
 
-        Self {
+        Ok(Self {
             codebook_count,
             codebooks,
             time_count,
@@ -189,8 +188,33 @@ impl SetupHeader {
             mode_count,
             mode_configurations,
             framing_flag,
-        }
+        })
     }
+}
+
+#[derive(Debug, Error)]
+pub enum SetupError {
+    #[error(transparent)]
+    Codebook(#[from] CodebookError),
+
+    #[error(transparent)]
+    TimeDomain(#[from] TimeDomainError),
+
+    #[error(transparent)]
+    Floor(#[from] FloorError),
+
+    #[error(transparent)]
+    Residue(#[from] ResidueError),
+
+    #[error(transparent)]
+    Mapping(#[from] MappingError),
+
+    #[error(transparent)]
+    Mode(#[from] ModeError),
+
+    // Represents all cases of `std::io::Error`.
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
 }
 
 #[derive(Debug, DekuRead)]

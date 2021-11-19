@@ -28,16 +28,16 @@ impl Codebook {
         let dimensions = reader.read(16)?;
         let entries: u32 = reader.read(24)?;
 
-        let ordered = reader.read::<u8>(1)? == 1;
+        let ordered = reader.read_bit()?;
 
         let mut sparse = None;
         let mut codeword_lengths: Vec<Option<u8>> = Vec::new();
         if ordered == false {
             // The codeword list is not length ordered and we need to read each codeword length one-by-one
-            sparse = Some(reader.read::<u8>(1)? == 1);
+            sparse = Some(reader.read_bit()?);
             for _ in 0..entries {
                 if sparse == Some(true) {
-                    let flag: bool = reader.read::<u8>(1)? == 1;
+                    let flag: bool = reader.read_bit()?;
                     if flag == true {
                         let length = reader.read::<u8>(5)? + 1;
                         codeword_lengths.push(Some(length));
@@ -77,7 +77,7 @@ impl Codebook {
                 let minimum_value = util::float32_unpack(reader.read(32)?);
                 let delta_value = util::float32_unpack(reader.read(32)?);
                 let value_bits = reader.read::<u8>(4)? + 1;
-                let sequence_p: bool = reader.read::<u8>(1)? == 1;
+                let sequence_p: bool = reader.read_bit()?;
                 let lookup_values = if lookup_type == 1 {
                     util::lookup1_values(entries, dimensions as u32)
                 } else {

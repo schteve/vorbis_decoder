@@ -15,7 +15,7 @@ impl Mode {
         R: std::io::Read,
         E: bitstream_io::Endianness,
     {
-        let blockflag = reader.read::<u8>(1)? == 1;
+        let blockflag = reader.read_bit()?;
         let window_type = reader.read(16)?;
         if window_type != 0 {
             // Zero is the only legal value in Vorbis I

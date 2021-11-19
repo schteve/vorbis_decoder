@@ -27,14 +27,14 @@ impl Mapping {
             return Err(MappingError::InvalidMappingType(mapping_type));
         }
 
-        let flag: bool = reader.read::<u8>(1)? == 1;
+        let flag: bool = reader.read_bit()?;
         let submaps = if flag == true {
             reader.read::<u8>(4)? + 1
         } else {
             1
         };
 
-        let flag: bool = reader.read::<u8>(1)? == 1;
+        let flag: bool = reader.read_bit()?;
         let mut magnitude: Vec<u8> = Vec::new();
         let mut angle: Vec<u8> = Vec::new();
         let coupling_steps = if flag == true {

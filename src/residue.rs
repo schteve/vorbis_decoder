@@ -33,7 +33,7 @@ impl Residue {
         let cascade: Vec<u8> = (0..classifications)
             .map(|_| {
                 let low_bits = reader.read::<u8>(3)?;
-                let bitflag: bool = reader.read::<u8>(1)? == 1;
+                let bitflag: bool = reader.read_bit()?;
                 let high_bits = if bitflag == true {
                     reader.read::<u8>(5)?
                 } else {

@@ -166,7 +166,7 @@ impl SetupHeader {
         let mode_configurations = (0..mode_count)
             .map(|_| Mode::decode(&mut reader))
             .collect::<Result<_, _>>()?;
-        let framing_flag: bool = reader.read::<u8>(1)? == 1;
+        let framing_flag: bool = reader.read_bit()?;
         assert!(framing_flag);
 
         // Check post-conditions since we're not properly handling packet continuation

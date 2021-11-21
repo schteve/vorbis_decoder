@@ -2,7 +2,7 @@ use crate::{huffman::HuffmanTree, util};
 use bitstream_io::{BitRead, BitReader};
 use thiserror::Error;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Codebook {
     dimensions: u16,
     entries: u32,
@@ -64,7 +64,7 @@ impl Codebook {
                 current_entry += number;
                 current_length += 1;
             }
-            if current_entry != entries {
+            if current_entry > entries {
                 return Err(CodebookError::TooManyEntries(current_entry));
             }
         }
@@ -120,7 +120,7 @@ impl Codebook {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct VectorLookupTable {
     minimum_value: f32,
     delta_value: f32,
@@ -141,7 +141,6 @@ pub enum CodebookError {
     #[error("Invalid lookup type: {0}")]
     InvalidLookupType(u8),
 
-    // Represents all cases of `std::io::Error`.
     #[error(transparent)]
     IOError(#[from] std::io::Error),
 }
@@ -151,5 +150,68 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_() {}
+    fn test_codebook_decode() {
+        use bitstream_io::{BitReader, LittleEndian};
+        use std::io::Cursor;
+
+        // Frampton codebook 0
+        let input = [66, 67, 86, 1, 0, 8, 0, 0, 0, 49, 76, 32, 197, 128];
+        let mut cursor = Cursor::new(input);
+        let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+        let mut codebook = Codebook::decode(&mut reader).unwrap();
+        codebook.huffman_tree = HuffmanTree::new(); // This is generated purely from codeword_lengths so don't bother testing it
+        assert_eq!(
+            codebook,
+            Codebook {
+                dimensions: 1,
+                entries: 8,
+                ordered: false,
+                sparse: Some(false),
+                codeword_lengths: vec![
+                    Some(1),
+                    Some(3),
+                    Some(4),
+                    Some(7),
+                    Some(2),
+                    Some(5),
+                    Some(6),
+                    Some(7)
+                ],
+                lookup_type: 0,
+                vector_lookup_table: None,
+                huffman_tree: HuffmanTree::new(),
+            }
+        );
+
+        // Invalid sync pattern
+        let input = [1, 2, 3];
+        let mut cursor = Cursor::new(input);
+        let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+        let err = Codebook::decode(&mut reader).unwrap_err();
+        assert!(matches!(err, CodebookError::InvalidSyncPattern([1, 2, 3])));
+
+        // Too many entries
+        let input = [66, 67, 86, 1, 0, 8, 0, 0, 61];
+        let mut cursor = Cursor::new(input);
+        let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+        let err = Codebook::decode(&mut reader).unwrap_err();
+        assert!(matches!(err, CodebookError::TooManyEntries(15)));
+
+        // Invalid lookup type
+        let input = [66, 67, 86, 1, 0, 8, 0, 0, 0, 49, 76, 32, 197, 188]; // Change lookup_type to 0b1111
+        let mut cursor = Cursor::new(input);
+        let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+        let err = Codebook::decode(&mut reader).unwrap_err();
+        assert!(matches!(err, CodebookError::InvalidLookupType(15)));
+
+        // IOError
+        let input = [];
+        let mut cursor = Cursor::new(input);
+        let mut reader = BitReader::endian(&mut cursor, LittleEndian);
+        let err = Codebook::decode(&mut reader).unwrap_err();
+        match err {
+            CodebookError::IOError(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => (),
+            x => panic!("Unexpected result: {:?}", x),
+        }
+    }
 }
